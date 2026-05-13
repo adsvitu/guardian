@@ -29,6 +29,17 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Diagnóstico de Ambiente
+        env:
+          GOOGLE_ADS_YAML: ${{ secrets.GOOGLE_ADS_YAML }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+        run: |
+          echo "--- Verificando Secrets ---"
+          if [ -z "$GOOGLE_ADS_YAML" ]; then echo "❌ GOOGLE_ADS_YAML está VAZIO!"; else echo "✅ GOOGLE_ADS_YAML carregado ($(echo $GOOGLE_ADS_YAML | wc -c) chars)"; fi
+          if [ -z "$N8N_WEBHOOK_URL" ]; then echo "❌ N8N_WEBHOOK_URL está VAZIO! Vai usar o fallback hardcoded."; else echo "✅ N8N_WEBHOOK_URL: $N8N_WEBHOOK_URL"; fi
+          echo "--- Testando conectividade com o webhook ---"
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}" "$N8N_WEBHOOK_URL" || echo "Webhook offline ou URL inválida"
+
       - name: Rodar Guardião Ecorenovar
         env:
           GOOGLE_ADS_YAML: ${{ secrets.GOOGLE_ADS_YAML }}
