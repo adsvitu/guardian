@@ -113,6 +113,37 @@ def get_guardian_insights():
     except:
         pass
 
+    # 4. Alerta de Saldo Baixo (< R$100 restante hoje)
+    today = datetime.now().strftime("%Y-%m-%d")
+    budget_query = f"""
+        SELECT 
+            campaign.name,
+            campaign_budget.amount_micros,
+            metrics.cost_micros
+        FROM campaign
+        WHERE campaign.status = 'ENABLED'
+        AND segments.date = '{today}'
+    """
+    try:
+        response = ga_service.search(customer_id=CUSTOMER_ID, query=budget_query)
+        total_budget = 0.0
+        total_gasto = 0.0
+        for r in response:
+            total_budget += r.campaign_budget.amount_micros / 1e6
+            total_gasto += r.metrics.cost_micros / 1e6
+
+        saldo_estimado = total_budget - total_gasto
+        if saldo_estimado < 100:
+            insights.insert(0, (
+                f"🚨 *ALERTA CRÍTICO DE SALDO!*\n"
+                f"Orçamento diário total: R${total_budget:.2f}\n"
+                f"Gasto até agora: R${total_gasto:.2f}\n"
+                f"*Saldo restante hoje: R${saldo_estimado:.2f}* (abaixo de R$100!)\n"
+                f"⚠️ Campanha pode pausar antes do fim do dia!"
+            ))
+    except:
+        pass
+
     return "\n".join(insights)
 
 if __name__ == "__main__":
