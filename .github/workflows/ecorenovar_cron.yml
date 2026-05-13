@@ -1,0 +1,34 @@
+name: Guardian - EcoRenovar (Google Ads)
+
+on:
+  schedule:
+    # Seg, Qua e Sex às 08h de Brasília (11h UTC)
+    - cron: '0 11 * * 1,3,5'
+  workflow_dispatch: 
+
+jobs:
+  run-guardian:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clonar Repositório
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar Dependências
+        run: |
+          cd google_ads/ecorenovar
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Rodar Guardião Ecorenovar
+        env:
+          GOOGLE_ADS_YAML: ${{ secrets.GOOGLE_ADS_YAML }}
+          N8N_WEBHOOK_URL: ${{ secrets.N8N_WEBHOOK_URL }}
+        run: |
+          cd google_ads/ecorenovar
+          python main.py
